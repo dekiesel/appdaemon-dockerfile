@@ -1,5 +1,6 @@
 #FROM python:3.8-alpine
-FROM python:3.9.5-buster
+ARG PYTHON_VERSION=${PYTHON_VERSION:-3.8.11-buster}
+FROM python:${PYTHON_VERSION}
 
 ARG AD_VERSION=${AD_VERSION:-4.0.5}
 ARG USERID=${USERID:-1000}
@@ -40,8 +41,10 @@ RUN apt-get install -y gcc libffi-dev libssl-dev tzdata curl musl-dev
 # Install additional packages for rhasspy
 RUN apt-get install -y ffmpeg lame flac vorbis-tools
 #cryptography dependencies
-RUN apt-get install -y build-essential libssl-dev libffi-dev python3-dev cargo
+RUN apt-get install -y build-essential libssl-dev libffi-dev
 RUN apt-get clean
+#as long as we are running on raspberry pi: use these prebuilt wheels to cut down on build time
+RUN echo [global] > /etc/pip.conf; echo extra-index-url=https://www.piwheels.org/simple >> /etc/pip.conf
 RUN python3 -m pip install --upgrade pip setuptools wheel
  
 
@@ -52,6 +55,7 @@ RUN unzip appdaemon.zip \
     && rm -rf appdaemon-${AD_VERSION} \
     && rm appdaemon.zip \
     && pip install --no-cache-dir .
+#    && pip install .
 
 RUN chmod +x ${WORKDIR}/dockerStart.sh
 
